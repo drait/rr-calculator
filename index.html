@@ -374,7 +374,7 @@
         return;
       }
 
-      const shares = Math.max(Math.round(riskAmount / riskPerShare), 0);
+      const shares = Math.max(Math.floor(riskAmount / riskPerShare), 0);
       if (shares === 0) {
         displayError('Risk amount is too small relative to risk per share to buy even 1 share.');
         return;

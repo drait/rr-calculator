@@ -19,4 +19,4 @@ You have two easy options:
    ```
 2. Visit [http://localhost:8000/index.html](http://localhost:8000/index.html) in your browser.
 
-Either approach will load the calculator so you can input trade parameters and view the computed results.
+Either approach will load the calculator so you can input trade parameters and view the computed results. An active internet connection is required for fetching the latest ticker price data (queried from Yahoo Finance).

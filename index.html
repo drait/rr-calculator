@@ -207,7 +207,16 @@
       <div class="grid-2">
         <div class="input-group">
           <label for="ticker">Ticker Symbol</label>
-          <input id="ticker" name="ticker" type="text" placeholder="e.g., AAPL" required />
+          <input
+            id="ticker"
+            name="ticker"
+            type="text"
+            placeholder="e.g., AAPL"
+            list="tickerSuggestions"
+            autocomplete="off"
+            required
+          />
+          <datalist id="tickerSuggestions"></datalist>
         </div>
         <div class="input-group">
           <label for="direction">Trade Direction</label>
@@ -278,6 +287,77 @@
     const riskInfoEl = document.getElementById('riskInfo');
     const directionSelect = document.getElementById('direction');
     const riskTypeSelect = document.getElementById('riskType');
+    const tickerInput = document.getElementById('ticker');
+    const tickerSuggestions = document.getElementById('tickerSuggestions');
+
+    const popularTickers = [
+      { symbol: 'AAPL', name: 'Apple Inc.' },
+      { symbol: 'MSFT', name: 'Microsoft Corporation' },
+      { symbol: 'GOOGL', name: 'Alphabet Inc. (Class A)' },
+      { symbol: 'GOOG', name: 'Alphabet Inc. (Class C)' },
+      { symbol: 'AMZN', name: 'Amazon.com, Inc.' },
+      { symbol: 'META', name: 'Meta Platforms, Inc.' },
+      { symbol: 'TSLA', name: 'Tesla, Inc.' },
+      { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+      { symbol: 'NFLX', name: 'Netflix, Inc.' },
+      { symbol: 'AMD', name: 'Advanced Micro Devices, Inc.' },
+      { symbol: 'INTC', name: 'Intel Corporation' },
+      { symbol: 'ORCL', name: 'Oracle Corporation' },
+      { symbol: 'CRM', name: 'Salesforce, Inc.' },
+      { symbol: 'ADBE', name: 'Adobe Inc.' },
+      { symbol: 'PYPL', name: 'PayPal Holdings, Inc.' },
+      { symbol: 'SQ', name: 'Block, Inc.' },
+      { symbol: 'SHOP', name: 'Shopify Inc.' },
+      { symbol: 'UBER', name: 'Uber Technologies, Inc.' },
+      { symbol: 'LYFT', name: 'Lyft, Inc.' },
+      { symbol: 'BABA', name: 'Alibaba Group Holding Limited' },
+      { symbol: 'V', name: 'Visa Inc.' },
+      { symbol: 'MA', name: 'Mastercard Incorporated' },
+      { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+      { symbol: 'BAC', name: 'Bank of America Corporation' },
+      { symbol: 'WFC', name: 'Wells Fargo & Company' },
+      { symbol: 'GS', name: 'Goldman Sachs Group, Inc.' },
+      { symbol: 'MS', name: 'Morgan Stanley' },
+      { symbol: 'C', name: 'Citigroup Inc.' },
+      { symbol: 'XLF', name: 'Financial Select Sector SPDR Fund' },
+      { symbol: 'XLE', name: 'Energy Select Sector SPDR Fund' },
+      { symbol: 'XLI', name: 'Industrial Select Sector SPDR Fund' },
+      { symbol: 'XLK', name: 'Technology Select Sector SPDR Fund' },
+      { symbol: 'XLV', name: 'Health Care Select Sector SPDR Fund' },
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' },
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust' },
+      { symbol: 'DIA', name: 'SPDR Dow Jones Industrial Average ETF Trust' },
+      { symbol: 'IWM', name: 'iShares Russell 2000 ETF' },
+      { symbol: 'ARKK', name: 'ARK Innovation ETF' },
+      { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF' },
+      { symbol: 'USO', name: 'United States Oil Fund, LP' },
+      { symbol: 'GLD', name: 'SPDR Gold Shares' },
+      { symbol: 'SLV', name: 'iShares Silver Trust' },
+      { symbol: 'BTC-USD', name: 'Bitcoin / U.S. Dollar' },
+      { symbol: 'ETH-USD', name: 'Ethereum / U.S. Dollar' },
+      { symbol: 'SOL-USD', name: 'Solana / U.S. Dollar' },
+      { symbol: 'DOGE-USD', name: 'Dogecoin / U.S. Dollar' },
+      { symbol: 'USDJPY', name: 'U.S. Dollar / Japanese Yen' },
+      { symbol: 'EURUSD', name: 'Euro / U.S. Dollar' },
+      { symbol: 'GBPUSD', name: 'British Pound / U.S. Dollar' },
+      { symbol: 'AUDUSD', name: 'Australian Dollar / U.S. Dollar' },
+      { symbol: 'CL=F', name: 'Crude Oil Futures' },
+      { symbol: 'GC=F', name: 'Gold Futures' }
+    ];
+
+    const tickerFragment = document.createDocumentFragment();
+    popularTickers.forEach(({ symbol, name }) => {
+      const option = document.createElement('option');
+      option.value = symbol;
+      option.label = name;
+      option.textContent = `${symbol} — ${name}`;
+      tickerFragment.appendChild(option);
+    });
+    tickerSuggestions.appendChild(tickerFragment);
+
+    tickerInput.addEventListener('input', () => {
+      tickerInput.value = tickerInput.value.toUpperCase();
+    });
 
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-US', {
@@ -374,7 +454,7 @@
         return;
       }
 
-      const shares = Math.max(Math.round(riskAmount / riskPerShare), 0);
+      const shares = Math.max(Math.floor(riskAmount / riskPerShare), 0);
       if (shares === 0) {
         displayError('Risk amount is too small relative to risk per share to buy even 1 share.');
         return;

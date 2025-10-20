@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trade Position Size Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #0f9d58;
+      --red: #d93025;
+      --blue: #1a73e8;
+      --gray-100: #f3f4f6;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-900: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, rgba(26, 115, 232, 0.12), transparent 60%),
+        var(--gray-100);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--gray-900);
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(17, 24, 39, 0.15);
+      max-width: 680px;
+      width: 100%;
+      padding: 2.5rem;
+      display: grid;
+      gap: 2rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0.6rem 0 0;
+      color: var(--gray-600);
+    }
+
+    form {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .input-group {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--gray-300);
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.15);
+    }
+
+    .grid-2 {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .risk-row {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: minmax(140px, 180px) 1fr;
+      align-items: end;
+    }
+
+    .risk-row .input-group:first-child {
+      align-self: stretch;
+    }
+
+    button {
+      background: var(--blue);
+      color: #fff;
+      font-weight: 600;
+      padding: 0.9rem 1rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(26, 115, 232, 0.25);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .result {
+      border-radius: 16px;
+      border: 1px solid var(--gray-300);
+      padding: 1.75rem;
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .result.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+      box-shadow: 0 12px 30px rgba(17, 24, 39, 0.12);
+    }
+
+    .result h2 {
+      margin-top: 0;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .result .value {
+      font-size: clamp(1.6rem, 3vw, 2.3rem);
+      font-weight: 700;
+      margin: 0.4rem 0;
+    }
+
+    .result .secondary {
+      color: var(--gray-600);
+      font-size: 0.95rem;
+    }
+
+    .helper-text {
+      margin-top: 1.2rem;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--gray-300);
+      color: var(--gray-600);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .error {
+      color: var(--red);
+      background: rgba(217, 48, 37, 0.08);
+      border: 1px solid rgba(217, 48, 37, 0.2);
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 1.8rem;
+      }
+
+      .risk-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header>
+      <h1>Trade Position Size Calculator</h1>
+      <p>Quickly determine optimal trade size, risk, and take-profit targets for any setup.</p>
+    </header>
+
+    <form id="calculator" novalidate>
+      <div class="grid-2">
+        <div class="input-group">
+          <label for="ticker">Ticker Symbol</label>
+          <input
+            id="ticker"
+            name="ticker"
+            type="text"
+            placeholder="e.g., AAPL"
+            list="tickerSuggestions"
+            autocomplete="off"
+            required
+          />
+          <datalist id="tickerSuggestions"></datalist>
+        </div>
+        <div class="input-group">
+          <label for="direction">Trade Direction</label>
+          <select id="direction" name="direction" required>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label for="entry">Entry Price</label>
+          <input id="entry" name="entry" type="number" min="0" step="0.01" placeholder="e.g., 145.50" required />
+        </div>
+        <div class="input-group">
+          <label for="stop">Stop Loss Price</label>
+          <input id="stop" name="stop" type="number" min="0" step="0.01" placeholder="e.g., 140.00" required />
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label for="rr">Risk/Reward Ratio</label>
+          <input id="rr" name="rr" type="number" min="0.1" step="0.1" placeholder="e.g., 2" required />
+        </div>
+        <div class="input-group">
+          <label for="balance">Account Balance</label>
+          <input id="balance" name="balance" type="number" min="0" step="0.01" placeholder="Required for % risk" />
+        </div>
+      </div>
+
+      <div class="risk-row">
+        <div class="input-group">
+          <label for="riskType">Risk Mode</label>
+          <select id="riskType" name="riskType" required>
+            <option value="fixed">Fixed $ Risk</option>
+            <option value="percent">% of Account</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="riskAmount">Account Risk Per Trade</label>
+          <input id="riskAmount" name="riskAmount" type="number" min="0" step="0.01" placeholder="e.g., 150" required />
+        </div>
+      </div>
+
+      <button type="submit">Calculate</button>
+      <div id="error" class="error"></div>
+    </form>
+
+    <section id="result" class="result" aria-live="polite">
+      <h2 id="resultHeading">Trade Summary</h2>
+      <p class="value" id="shares">Recommended Shares: &mdash;</p>
+      <p class="value" id="target">Take-Profit Target: &mdash;</p>
+      <p class="secondary" id="riskInfo"></p>
+      <div class="helper-text">
+        Risk per share = |entry − stop|. Position size = risk ÷ risk per share. Take-profit is adjusted by the risk/reward ratio.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('calculator');
+    const resultBox = document.getElementById('result');
+    const errorBox = document.getElementById('error');
+    const sharesEl = document.getElementById('shares');
+    const targetEl = document.getElementById('target');
+    const riskInfoEl = document.getElementById('riskInfo');
+    const directionSelect = document.getElementById('direction');
+    const riskTypeSelect = document.getElementById('riskType');
+    const tickerInput = document.getElementById('ticker');
+    const tickerSuggestions = document.getElementById('tickerSuggestions');
+
+    const popularTickers = [
+      { symbol: 'AAPL', name: 'Apple Inc.' },
+      { symbol: 'MSFT', name: 'Microsoft Corporation' },
+      { symbol: 'GOOGL', name: 'Alphabet Inc. (Class A)' },
+      { symbol: 'GOOG', name: 'Alphabet Inc. (Class C)' },
+      { symbol: 'AMZN', name: 'Amazon.com, Inc.' },
+      { symbol: 'META', name: 'Meta Platforms, Inc.' },
+      { symbol: 'TSLA', name: 'Tesla, Inc.' },
+      { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+      { symbol: 'NFLX', name: 'Netflix, Inc.' },
+      { symbol: 'AMD', name: 'Advanced Micro Devices, Inc.' },
+      { symbol: 'INTC', name: 'Intel Corporation' },
+      { symbol: 'ORCL', name: 'Oracle Corporation' },
+      { symbol: 'CRM', name: 'Salesforce, Inc.' },
+      { symbol: 'ADBE', name: 'Adobe Inc.' },
+      { symbol: 'PYPL', name: 'PayPal Holdings, Inc.' },
+      { symbol: 'SQ', name: 'Block, Inc.' },
+      { symbol: 'SHOP', name: 'Shopify Inc.' },
+      { symbol: 'UBER', name: 'Uber Technologies, Inc.' },
+      { symbol: 'LYFT', name: 'Lyft, Inc.' },
+      { symbol: 'BABA', name: 'Alibaba Group Holding Limited' },
+      { symbol: 'V', name: 'Visa Inc.' },
+      { symbol: 'MA', name: 'Mastercard Incorporated' },
+      { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+      { symbol: 'BAC', name: 'Bank of America Corporation' },
+      { symbol: 'WFC', name: 'Wells Fargo & Company' },
+      { symbol: 'GS', name: 'Goldman Sachs Group, Inc.' },
+      { symbol: 'MS', name: 'Morgan Stanley' },
+      { symbol: 'C', name: 'Citigroup Inc.' },
+      { symbol: 'XLF', name: 'Financial Select Sector SPDR Fund' },
+      { symbol: 'XLE', name: 'Energy Select Sector SPDR Fund' },
+      { symbol: 'XLI', name: 'Industrial Select Sector SPDR Fund' },
+      { symbol: 'XLK', name: 'Technology Select Sector SPDR Fund' },
+      { symbol: 'XLV', name: 'Health Care Select Sector SPDR Fund' },
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' },
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust' },
+      { symbol: 'DIA', name: 'SPDR Dow Jones Industrial Average ETF Trust' },
+      { symbol: 'IWM', name: 'iShares Russell 2000 ETF' },
+      { symbol: 'ARKK', name: 'ARK Innovation ETF' },
+      { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF' },
+      { symbol: 'USO', name: 'United States Oil Fund, LP' },
+      { symbol: 'GLD', name: 'SPDR Gold Shares' },
+      { symbol: 'SLV', name: 'iShares Silver Trust' },
+      { symbol: 'BTC-USD', name: 'Bitcoin / U.S. Dollar' },
+      { symbol: 'ETH-USD', name: 'Ethereum / U.S. Dollar' },
+      { symbol: 'SOL-USD', name: 'Solana / U.S. Dollar' },
+      { symbol: 'DOGE-USD', name: 'Dogecoin / U.S. Dollar' },
+      { symbol: 'USDJPY', name: 'U.S. Dollar / Japanese Yen' },
+      { symbol: 'EURUSD', name: 'Euro / U.S. Dollar' },
+      { symbol: 'GBPUSD', name: 'British Pound / U.S. Dollar' },
+      { symbol: 'AUDUSD', name: 'Australian Dollar / U.S. Dollar' },
+      { symbol: 'CL=F', name: 'Crude Oil Futures' },
+      { symbol: 'GC=F', name: 'Gold Futures' }
+    ];
+
+    const tickerFragment = document.createDocumentFragment();
+    popularTickers.forEach(({ symbol, name }) => {
+      const option = document.createElement('option');
+      option.value = symbol;
+      option.label = name;
+      option.textContent = `${symbol} — ${name}`;
+      tickerFragment.appendChild(option);
+    });
+    tickerSuggestions.appendChild(tickerFragment);
+
+    tickerInput.addEventListener('input', () => {
+      tickerInput.value = tickerInput.value.toUpperCase();
+    });
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(value);
+    }
+
+    function updateResultTheme(direction) {
+      const color = direction === 'long' ? 'var(--green)' : 'var(--red)';
+      resultBox.style.borderColor = color;
+      resultBox.style.boxShadow = `0 12px 30px ${direction === 'long' ? 'rgba(15, 157, 88, 0.25)' : 'rgba(217, 48, 37, 0.25)'}`;
+      sharesEl.style.color = color;
+      targetEl.style.color = color;
+    }
+
+    function displayError(message) {
+      errorBox.textContent = message;
+      errorBox.style.display = 'block';
+      resultBox.classList.remove('visible');
+    }
+
+    function clearError() {
+      errorBox.textContent = '';
+      errorBox.style.display = 'none';
+    }
+
+    riskTypeSelect.addEventListener('change', () => {
+      const balanceInput = document.getElementById('balance');
+      if (riskTypeSelect.value === 'percent') {
+        balanceInput.setAttribute('required', '');
+        balanceInput.placeholder = 'e.g., 10000';
+      } else {
+        balanceInput.removeAttribute('required');
+        balanceInput.placeholder = 'Optional';
+      }
+    });
+
+    directionSelect.addEventListener('change', (event) => {
+      updateResultTheme(event.target.value);
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      clearError();
+
+      const ticker = form.ticker.value.trim();
+      const direction = form.direction.value;
+      const entry = parseFloat(form.entry.value);
+      const stop = parseFloat(form.stop.value);
+      const rr = parseFloat(form.rr.value);
+      const riskType = form.riskType.value;
+      const riskInput = parseFloat(form.riskAmount.value);
+      const balanceInput = form.balance.value ? parseFloat(form.balance.value) : null;
+
+      if (!ticker) {
+        displayError('Please enter a ticker symbol.');
+        return;
+      }
+
+      if ([entry, stop, rr, riskInput].some((value) => !Number.isFinite(value) || value <= 0)) {
+        displayError('Entry, stop, risk/reward, and risk amount must be positive numbers.');
+        return;
+      }
+
+      if (entry === stop) {
+        displayError('Entry and stop loss prices cannot be the same.');
+        return;
+      }
+
+      if (riskType === 'percent') {
+        if (!Number.isFinite(balanceInput) || balanceInput <= 0) {
+          displayError('Please provide a positive account balance for percentage risk.');
+          return;
+        }
+        if (riskInput >= 100) {
+          displayError('Risk percentage should be less than 100%.');
+          return;
+        }
+      }
+
+      const riskPerShare = Math.abs(entry - stop);
+      if (riskPerShare === 0) {
+        displayError('Risk per share cannot be zero.');
+        return;
+      }
+
+      const riskAmount = riskType === 'percent'
+        ? balanceInput * (riskInput / 100)
+        : riskInput;
+
+      if (riskAmount <= 0) {
+        displayError('Calculated risk amount must be positive.');
+        return;
+      }
+
+      const shares = Math.max(Math.floor(riskAmount / riskPerShare), 0);
+      if (shares === 0) {
+        displayError('Risk amount is too small relative to risk per share to buy even 1 share.');
+        return;
+      }
+
+      const targetMove = riskPerShare * rr;
+      const takeProfit = direction === 'long'
+        ? entry + targetMove
+        : entry - targetMove;
+
+      sharesEl.textContent = `Recommended Shares: ${shares.toLocaleString()}`;
+      targetEl.textContent = `Take-Profit Target: ${formatCurrency(takeProfit)}`;
+      const riskDisplay = riskType === 'percent'
+        ? `${formatCurrency(riskAmount)} risk (${riskInput}% of ${formatCurrency(balanceInput)})`
+        : `${formatCurrency(riskAmount)} risk per trade`;
+      riskInfoEl.textContent = `${ticker.toUpperCase()} | Risk per share ${formatCurrency(riskPerShare)} | ${riskDisplay}`;
+
+      updateResultTheme(direction);
+      resultBox.classList.add('visible');
+    });
+
+    updateResultTheme(directionSelect.value);
+  </script>
+</body>
+</html>
